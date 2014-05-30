@@ -83,6 +83,7 @@
     </Reference>
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Web" />
     <Reference Include="System.Web.Abstractions" />
     <Reference Include="System.Web.Extensions" />
@@ -91,8 +92,9 @@
       <HintPath>..\..\packages\Microsoft.AspNet.WebPages.2.0.30506.0\lib\net40\System.Web.Helpers.dll</HintPath>
     </Reference>
     <Reference Include="System.Web.Mvc, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <Private>True</Private>
       <HintPath>..\..\packages\Microsoft.AspNet.Mvc.4.0.30506.0\lib\net40\System.Web.Mvc.dll</HintPath>
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Razor, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <Private>True</Private>
@@ -152,12 +154,28 @@
     <Compile Include="Configuration\CollaborationElement.cs" />
     <Compile Include="Configuration\FileListElement.cs" />
     <Compile Include="Configuration\DocViewerElement.cs" />
+    <Compile Include="Configuration\HtmlSanitizeElement.cs" />
     <Compile Include="Configuration\TargetingCollection.cs" />
     <Compile Include="Configuration\TargetingElement.cs" />
     <Compile Include="Configuration\ExceptionResolutionMode.cs" />
     <Compile Include="Configuration\ServerElement.cs" />
     <Compile Include="Definitions\DefinitionEventArgs.cs" />
     <Compile Include="Definitions\IPlaceholder.cs" />
+    <Compile Include="Edit\Versioning\VersionInfo.cs" />
+    <Compile Include="Persistence\LinqQueryFacade.cs" />
+    <Compile Include="Persistence\NH\LinqNHQueryFacade.cs" />
+    <Compile Include="Persistence\Xml\CacheBox.cs" />
+    <Compile Include="Persistence\Xml\ContentDataContractResolver.cs" />
+    <Compile Include="Persistence\Xml\ApplicationCache.cs" />
+    <Compile Include="Persistence\Xml\ContentDataContractSurrogate.cs" />
+    <Compile Include="Persistence\Xml\SessionCache.cs" />
+    <Compile Include="Persistence\Xml\UnresolvedParent.cs" />
+    <Compile Include="Persistence\Xml\XmlContentRepository.cs" />
+    <Compile Include="Persistence\Xml\XmlFileSystem.cs" />
+    <Compile Include="Persistence\Xml\XmlInstallationManager.cs" />
+    <Compile Include="Persistence\Xml\LinqXmlQueryFacade.cs" />
+    <Compile Include="Web\HtmlSanitizer.cs" />
+    <Compile Include="Web\IStyleable.cs" />
     <Compile Include="Definitions\ITemplateAggregator.cs" />
     <Compile Include="Definitions\TemplateAggregator.cs" />
     <Compile Include="Details\EditableDirectUrlAttribute.cs" />
@@ -172,8 +190,6 @@
     <Compile Include="Edit\Api\IProfileRepository.cs" />
     <Compile Include="Edit\Api\ManagementModule.cs" />
     <Compile Include="Edit\Api\ProfileHandler.cs" />
-    <Compile Include="Edit\ISafeContentRenderer.cs" />
-    <Compile Include="Edit\SafeContentRenderer.cs" />
     <Compile Include="Edit\Installation\InstallationExtensions.cs" />
     <Compile Include="Edit\Installation\MigrationAttribute.cs" />
     <Compile Include="Edit\MetaInfo.cs" />
@@ -571,8 +587,8 @@
     <Compile Include="Persistence\FilesystemTransaction.cs" />
     <Compile Include="Persistence\NH\DetailCollectionFactory.cs" />
     <Compile Include="Persistence\NH\PersistentDetailCollectionList.cs" />
-    <Compile Include="Persistence\Serialization\Html\ItemHtmlWriter.cs" />
-    <Compile Include="Persistence\Serialization\Html\ItemHtmlReader.cs" />
+    <Compile Include="Persistence\Xml\ItemHtmlWriter.cs" />
+    <Compile Include="Persistence\Xml\ItemHtmlReader.cs" />
     <Compile Include="Persistence\IContentItemRepository.cs" />
     <Compile Include="Persistence\Behaviors\ISavingBehavior.cs" />
     <Compile Include="Persistence\IPersistableProperty.cs" />
@@ -622,7 +638,7 @@
     <Compile Include="Persistence\Search\ContentIndexer.cs" />
     <Compile Include="Persistence\Search\SortFieldData.cs" />
     <Compile Include="Persistence\Serialization\ChildXmlReader.cs" />
-    <Compile Include="Persistence\Serialization\Html\XmlRepository.cs" />
+    <Compile Include="Persistence\Xml\XmlRepository.cs" />
     <Compile Include="Persistence\Serialization\UnresolvedLink.cs" />
     <Compile Include="Persistence\Sources\ContentSource.cs" />
     <Compile Include="Persistence\Finder\INullableCriteriaOfT.cs" />
@@ -779,6 +795,7 @@
     <Compile Include="Web\Wiki\Analyzers\CommentAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\ExternalLinkAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\HeadingAnalyzer.cs" />
+    <Compile Include="Web\Wiki\Analyzers\HtmlElementAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\InternalLinkAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\ItalicsAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\ListItemAnalyzerBase.cs" />
@@ -786,6 +803,7 @@
     <Compile Include="Web\Wiki\Analyzers\TemplateAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\UnorderedListItemAnalyzer.cs" />
     <Compile Include="Web\Wiki\Analyzers\UserInfoAnalyzer.cs" />
+    <Compile Include="Web\Wiki\Analyzers\NewLineAnalyzer.cs" />
     <Compile Include="Web\Wiki\WikiParser.cs" />
     <Compile Include="Web\Parsing\Component.cs" />
     <Compile Include="Web\Parsing\Parser.cs" />
@@ -911,7 +929,6 @@
     <Compile Include="Integrity\CannotDeleteRootException.cs" />
     <Compile Include="Integrity\DestinationOnOrBelowItselfException.cs" />
     <Compile Include="Persistence\Comparison.cs" />
-    <Compile Include="Persistence\DoNotCopyAttribute.cs" />
     <Compile Include="Persistence\NH\IConfigurationBuilder.cs" />
     <Compile Include="Persistence\NH\ISessionProvider.cs" />
     <Compile Include="Plugin\IPluginInitializer.cs" />
@@ -1009,7 +1026,6 @@
     <Compile Include="Configuration\SettingsEditorCollection.cs" />
     <Compile Include="Configuration\SiteElement.cs" />
     <Compile Include="Configuration\SiteElementCollection.cs" />
-    <Compile Include="Configuration\TinyMCEElement.cs" />
     <Compile Include="Configuration\UrlElement.cs" />
     <Compile Include="Configuration\WebElement.cs" />
     <Compile Include="Definitions\AbstractDefinitionRefiner.cs" />
@@ -1072,7 +1088,6 @@
     <Compile Include="Edit\Workflow\Commands\DeleteCommand.cs" />
     <Compile Include="Edit\Workflow\Commands\EnsureNotPublishedCommand.cs" />
     <Compile Include="Edit\Workflow\Commands\EnsurePublishedCommand.cs" />
-    <Compile Include="Edit\Workflow\Commands\IncrementVersionIndexCommand.cs" />
     <Compile Include="Edit\Workflow\Commands\MakeVersionCommand.cs" />
     <Compile Include="Edit\Workflow\Commands\MoveToPositionCommand.cs" />
     <Compile Include="Edit\Workflow\Commands\OnMasterCommand.cs" />
@@ -1313,7 +1328,6 @@
     <Compile Include="Web\IPathFinder.cs" />
     <Compile Include="Web\Mail\IMailSender.cs" />
     <Compile Include="Web\Mail\SmtpMailSender.cs" />
-    <Compile Include="Web\Mail\StaticMailSender.cs" />
     <Compile Include="Web\Parts\CreateUrlProvider.cs" />
     <Compile Include="Web\Parts\EditUrlProvider.cs" />
     <Compile Include="Web\Parts\ItemCopyer.cs" />
@@ -1430,7 +1444,6 @@
     <Compile Include="Web\UI\WebControls\TabPanel.cs" />
     <Compile Include="Web\UI\WebControls\Tree.cs" />
     <Compile Include="Web\UI\WebControls\TreeNode.cs" />
-    <Compile Include="Web\UI\WebControls\Ul.cs" />
     <Compile Include="Web\UI\WebControls\UrlRelativityMode.cs" />
     <Compile Include="Web\Url.cs" />
     <Compile Include="Web\WebRequestContext.cs" />

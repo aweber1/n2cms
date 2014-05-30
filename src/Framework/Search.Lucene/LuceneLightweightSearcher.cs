@@ -9,10 +9,11 @@ using System.Diagnostics;
 
 namespace N2.Persistence.Search
 {
-    [Service(typeof(ILightweightSearcher), Replaces = typeof(FindingContentSearcher), Configuration = "lucene")]
+    [Service(typeof(ILightweightSearcher), Replaces = typeof(FindingContentSearcher), Configuration = "Lucene")]
     public class LuceneLightweightSearcher : LuceneSearcherBase<LightweightHitData>, ILightweightSearcher
     {
         LuceneAccesor accessor;
+		private readonly Engine.Logger<LuceneLightweightSearcher> logger;
 
         public LuceneLightweightSearcher(LuceneAccesor accessor)
             : base(accessor)
@@ -22,6 +23,8 @@ namespace N2.Persistence.Search
 
         protected override Result<LightweightHitData> CreateResults(N2.Persistence.Search.Query query, IndexSearcher s, TopDocs hits)
         {
+			logger.InfoFormat("Creating results for query {0} and {1} hits", query.Text, hits.TotalHits);
+
             var result = new Result<LightweightHitData>();
             result.Total = hits.TotalHits;
             var resultHits = hits.ScoreDocs.Skip(query.SkipHits).Take(query.TakeHits).Select(hit =>

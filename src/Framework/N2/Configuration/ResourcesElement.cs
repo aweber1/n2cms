@@ -4,7 +4,8 @@ namespace N2.Configuration
 {
     public class ResourcesElement : ConfigurationElement
     {
-        public const string JQueryVersion = "1.10.2";
+        public const string JQueryVersion = "1.11.0";
+        public const string JQueryUiVersion = "1.10.4";
 
         /// <summary>Whether to make registered web resources debuggable.</summary>
         [ConfigurationProperty("debug")]
@@ -23,7 +24,7 @@ namespace N2.Configuration
         }
 
         /// <summary>The path to the included jQuery UI javascript resource.</summary>
-        [ConfigurationProperty("jQueryUiPath", DefaultValue = "{ManagementUrl}/Resources/jquery-ui-1.10.2.custom/js/jquery-ui-1.10.2.custom.min.js")]
+        [ConfigurationProperty("jQueryUiPath", DefaultValue = "{ManagementUrl}/Resources/jquery-ui-" + JQueryUiVersion + ".custom/js/jquery-ui-" + JQueryUiVersion + ".custom.min.js")]
         public string JQueryUiPath
         {
             get { return (string)base["jQueryUiPath"]; }
@@ -39,23 +40,15 @@ namespace N2.Configuration
         }
 
         /// <summary>The path to the included angular javascript resource.</summary>
-        [ConfigurationProperty("angularPath", DefaultValue = "{ManagementUrl}/Resources/angular-1.1.5/angular.min.js")]
-        public string AngularPath
+		[ConfigurationProperty("angularRoot", DefaultValue = "//cdnjs.cloudflare.com/ajax/libs/angular.js/1.2.16/")]
+		public string AngularRoot
         {
-            get { return (string)base["angularPath"]; }
-            set { base["angularPath"] = value; }
-        }
-
-        /// <summary>The path to the included angular javascript resource.</summary>
-        [ConfigurationProperty("angularResourcesPath", DefaultValue = "{ManagementUrl}/Resources/angular-1.1.5/angular-resource.min.js")]
-        public string AngularResourcesPath
-        {
-            get { return (string)base["angularResourcesPath"]; }
-            set { base["angularResourcesPath"] = value; }
+			get { return (string)base["angularRoot"]; }
+			set { base["angularRoot"] = value; }
         }
 
         /// <summary>The path to the included tiny MCE javascript resource.</summary>
-        [ConfigurationProperty("ckEditorPath", DefaultValue = "{ManagementUrl}/Resources/ckeditor/ckeditor.js?v=" + JQueryVersion)]
+		[ConfigurationProperty("ckEditorPath", DefaultValue = "//cdnjs.cloudflare.com/ajax/libs/ckeditor/4.3.2/ckeditor.js?v=" + JQueryVersion)]
         public string CKEditorPath
         {
             get { return (string)base["ckEditorPath"]; }
@@ -83,25 +76,11 @@ namespace N2.Configuration
             set { base["partsCssPath"] = value; }
         }
 
-        [ConfigurationProperty("twitterBootstrapCssPath", DefaultValue = N2.Resources.Register.DefaultBootstrapCssPath)]
-        public string TwitterBootstrapCssPath
+		[ConfigurationProperty("twitterBootstrapRoot", DefaultValue = "{ManagementUrl}/Resources/bootstrap/")]
+		public string TwitterBootstrapRoot
         {
-            get { return (string)base["twitterBootstrapCssPath"]; }
-            set { base["twitterBootstrapCssPath"] = value; }
-        }
-
-        [ConfigurationProperty("twitterBootstrapResponsiveCssPath", DefaultValue = N2.Resources.Register.DefaultBootstrapResponsiveCssPath)]
-        public string TwitterBootstrapResponsiveCssPath
-        {
-            get { return (string)base["twitterBootstrapResponsiveCssPath"]; }
-            set { base["twitterBootstrapResponsiveCssPath"] = value; }
-        }
-
-        [ConfigurationProperty("twitterBootstrapJsPath", DefaultValue = N2.Resources.Register.DefaultBootstrapJsPath)]
-        public string TwitterBootstrapJsPath
-        {
-            get { return (string)base["twitterBootstrapJsPath"]; }
-            set { base["twitterBootstrapJsPath"] = value; }
+			get { return (string)base["twitterBootstrapRoot"]; }
+			set { base["twitterBootstrapRoot"] = value; }
         }
 
         [ConfigurationProperty("iconsCssPath", DefaultValue = N2.Resources.Register.DefaultIconsCssPath)]

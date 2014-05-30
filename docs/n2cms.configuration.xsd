@@ -76,7 +76,9 @@
 																	</xs:complexType>
 																</xs:element>
 															</xs:sequence>
-														</xs:complexType>
+                              <xs:attribute name="uploadsWhitelistExression" type="xs:string"/>
+                              <xs:attribute name="uploadsBlacklistExression" type="xs:string"/>
+                            </xs:complexType>
 													</xs:element>
 												</xs:all>
 												<xs:attribute name="id" type="xs:integer" use="required" />
@@ -149,6 +151,8 @@
 							<xs:element name="resources" minOccurs="0">
 								<xs:complexType>
 									<xs:attribute name="debug" type="xs:boolean" use="optional" default="false" />
+									<xs:attribute name="angularFolderPath" type="xs:string" use="optional" />
+									<xs:attribute name="twitterBootstrapRoot" type="xs:string" use="optional" />
 									<xs:attribute name="jQueryPath" type="xs:string" use="optional" />
 									<xs:attribute name="jQueryUiPath" type="xs:string" use="optional" />
 									<xs:attribute name="jQueryPluginsPath" type="xs:string" use="optional" />
@@ -202,6 +206,11 @@
 									<xs:attribute name="senderName" type="xs:string" use="optional" />
 									<xs:attribute name="enabled" type="xs:boolean" use="optional" />
 									<xs:attribute name="async" type="xs:boolean" use="optional" />
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="htmlSanitize" minOccurs="0">
+								<xs:complexType>
+									<xs:attribute name="encodeHtml" type="xs:boolean" use="optional" />
 								</xs:complexType>
 							</xs:element>
 						</xs:all>
@@ -362,7 +371,6 @@
 						<xs:attribute name="castleConfiguration" type="xs:string" use="optional" />
 						<xs:attribute name="multipleSitesConfiguration" type="xs:string" use="optional" />
 						<xs:attribute name="dynamicDiscovery" type="xs:boolean" use="optional" />
-						<xs:attribute name="defaultHtmlEscape" type="xs:boolean" use="optional" />
 						<xs:attribute name="castleSection" type="xs:string" use="optional" />
 						<xs:attribute name="engineType" type="xs:string" use="optional" />
 						<xs:attribute name="containerType" type="xs:string" use="optional" />
@@ -481,19 +489,18 @@
 						<xs:attribute name="flavour" use="optional">
 							<xs:simpleType>
 								<xs:restriction base="xs:string">
-									<xs:enumeration value="SqlServer2008"/>
-									<xs:enumeration value="SqlServer2005"/>
-									<xs:enumeration value="SqlServer2000"/>
+									<xs:enumeration value="AutoDetect"/>
+									<xs:enumeration value="SqlServer"/>
 									<xs:enumeration value="SqlCe"/>
 									<xs:enumeration value="MySql"/>
 									<xs:enumeration value="SqLite"/>
-									<xs:enumeration value="Firebird"/>
 									<xs:enumeration value="Generic"/>
 									<xs:enumeration value="Jet"/>
 									<xs:enumeration value="DB2"/>
 									<xs:enumeration value="Oracle9i"/>
 									<xs:enumeration value="Oracle10g"/>
-									<xs:enumeration value="AutoDetect"/>
+									<xs:enumeration value="MongoDB"/>
+									<xs:enumeration value="Xml"/>
 								</xs:restriction>
 							</xs:simpleType>
 						</xs:attribute>
@@ -763,6 +770,7 @@
 									<xs:attribute name="editInterfaceUrl" type="xs:string" use="optional" />
 									<xs:attribute name="newItemUrl" type="xs:string" use="optional" />
 									<xs:attribute name="deleteItemUrl" type="xs:string" use="optional" />
+                  <xs:attribute name="ensureLocalhostPreviewUrls" type="xs:boolean" use="optional" />
 								</xs:complexType>
 							</xs:element>
 						</xs:all>
@@ -771,7 +779,7 @@
 						<xs:attribute name="legacy" type="xs:boolean" use="optional" />
 					</xs:complexType>
 				</xs:element>
-				<xs:element name="web">
+				<!--<xs:element name="web">
 					<xs:complexType>
 						<xs:all>
 							<xs:element name="filelist" minOccurs="0" maxOccurs="1">
@@ -781,7 +789,7 @@
 							</xs:element>
 						</xs:all>
 					</xs:complexType>
-				</xs:element>
+				</xs:element>-->
 			</xs:all>
 		</xs:complexType>
 	</xs:element>

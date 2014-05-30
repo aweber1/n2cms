@@ -1,17 +1,50 @@
-﻿(function(app){
-	app.value('$strapConfig', {
+﻿(function (n2Module) {
+	n2Module.value('$strapConfig', {
 		datepicker: {
 			language: 'en',
 			format: 'M d, yyyy'
 		}
 	});
-})(angular.module('n2', ['n2.directives', 'n2.services', 'n2.localization', 'ui', '$strap.directives']))
+})(angular.module('n2', ['n2.directives', 'n2.services', 'n2.localization', 'ui', '$strap.directives', "ngRoute"], function ($routeProvider, $locationProvider) {
+    if (history.pushState) {
+        $locationProvider.html5Mode(true);
+        $locationProvider.hashPrefix("!");
+    }
+	$routeProvider.otherwise({
+	    templateUrl: "App/Partials/Framework.html",
+	    controller: "ManagementCtrl",
+	    reloadOnSearch: false
+	});
+}))
+
+function findBranch(node, selectedPath) {
+	if (!node)
+		return null;
+	if (node.Current.Path == selectedPath) {
+		return [node];
+	}
+	if (selectedPath.indexOf(node.Current.Path) < 0) {
+		return null;
+	}
+	
+	for (var i in node.Children) {
+		var n = findBranch(node.Children[i], selectedPath);
+		if (n) {
+			n.push(node);
+			return n;
+		}
+	}
+	return null;
+}
 
 function findNodeRecursive(node, selectedPath) {
 	if (!node)
 		return null;
 	if (node.Current.Path == selectedPath) {
 		return node;
+	}
+	if (selectedPath.indexOf(node.Current.Path) < 0) {
+		return null;
 	}
 
 	for (var i in node.Children) {
@@ -36,23 +69,23 @@ function getParentPath(path) {
 
 function Uri(uri) {
 	this.uri = uri;
-	this.appendQuery = function (key, value) {
+	this.appendQuery = function(key, value) {
 		if (uri.indexOf("?") >= 0)
 			this.uri += "&" + key + "=" + value;
 		else
 			this.uri += "?" + key + "=" + value;
 		return this;
-	}
-	this.toString = function () {
+	};
+	this.toString = function() {
 		return this.uri;
-	}
+	};
 };
 
-function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Content, Profile, Security, FrameContext, Translate, Eventually) {
+function ManagementCtrl($scope, $window, $timeout, $interpolate, $location, Context, Content, Profile, Security, FrameContext, Translate, Eventually, LocationKeeper) {
 	$scope.Content = Content;
 	$scope.Security = Security;
 
-	$scope.appendPreviewOptions = function (url) {
+	$scope.appendPreviewOptions = function(url) {
 		if (url == "Empty.aspx")
 			return url;
 
@@ -61,17 +94,16 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 		}
 
 		return url;
-	}
+	};
 
-	$scope.setPreviewQuery = function (key, value) {
+	$scope.setPreviewQuery = function(key, value) {
 		if (value)
 			$scope.Context.PreviewQueries[key] = value;
 		else
 			delete $scope.Context.PreviewQueries[key];
-	}
-	
-	$scope.appendQuery = function(url, key, value)
-	{
+	};
+
+	$scope.appendQuery = function(url, key, value) {
 		if (!url) return url;
 
 		var hashIndex = url.indexOf("#");
@@ -84,27 +116,28 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 		if (url.match(re))
 			return url.replace(re, '$1' + keyValue + '$2');
 		else
-			return url + (url.indexOf("?") < 0 ? "?" : "&") + keyValue
-	}
+			return url + (url.indexOf("?") < 0 ? "?" : "&") + keyValue;
+	};
 
-	$scope.appendSelection = function (url, appendVersionIndex) {
+	$scope.appendSelection = function(url, appendVersionIndex) {
 		var ctx = $scope.Context;
 		if (!ctx.CurrentItem)
 			return url;
 		url = $scope.appendQuery(url, ctx.Paths.SelectedQueryKey + "=" + ctx.CurrentItem.Path + "&" + ctx.Paths.ItemQueryKey + "=" + ctx.CurrentItem.ID);
 		if (appendVersionIndex)
-			url += "&versionIndex=" + ctx.CurrentItem.VersionIndex;
+			url += "&n2versionIndex=" + ctx.CurrentItem.VersionIndex;
 		return url;
-	}
+	};
 
-	$scope.previewUrl = function (url) {
+	$scope.previewUrl = function(url) {
 		if (window.frames.preview)
 			window.frames.preview.window.location = $scope.appendPreviewOptions(url) || "Empty.aspx";
-	}
+	};
 
 	decorate(FrameContext, "refresh", function (ctx) {
 		// legacy refresh call from frame
-		if (ctx.force) {
+	    if (ctx.force) {
+			$scope.reloadNode(ctx.path);
 			$scope.reloadChildren(ctx.path);
 			if (ctx.previewUrl) {
 				$scope.previewUrl(ctx.previewUrl);
@@ -117,28 +150,25 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 			return;
 
 		if (!findNodeRecursive($scope.Context.Content, ctx.path)) {
-			$scope.reloadChildren(getParentPath(ctx.path), function () {
-				$scope.select(ctx.path, ctx.versionIndex, /*keepFlags*/false, /*forceContextRefresh*/false, /*preventReload*/false, /*disregardNodeUrl*/true);
+			$scope.reloadChildren(getParentPath(ctx.path), /*callback*/function () {
+			    $scope.expandTo(ctx.path, /*select*/true);
+			}, /*pathNotFound*/function () {
+				$scope.reloadTree(/*selectedPath*/ctx.path);
 			});
+		} else if (ctx.force) {
+		    $scope.expandTo(ctx.path, /*select*/true);
 		}
-
-		//if (!$scope.select(ctx.path, ctx.versionIndex, /*keepFlags*/false, /*forceContextRefresh*/false, /*preventReload*/false, /*disregardNodeUrl*/true)) {
-		//	$scope.reloadChildren(getParentPath(ctx.path), function () {
-		//		$scope.select(ctx.path, ctx.versionIndex, /*keepFlags*/!ctx.force, /*forceContextRefresh*/false, /*preventReload*/false, /*disregardNodeUrl*/true);
-		//	});
-		//}
 	});
 
-	var viewMatch = window.location.search.match(/[?&]view=([^?&]+)/);
-	var selectedMatch = window.location.search.match(/[?&]selected=([^?&]+)/);
-	var organizeMatch = window.location.search.match(/[?&]mode=([^?&#]+)/);
 	$scope.Context = {
 		CurrentItem: {
 			PreviewUrl: "Empty.aspx"
 		},
 		SelectedNode: {
+			
 		},
 		ContextMenu: {
+			
 		},
 		Partials: {
 			Management: "App/Partials/Loading.html"
@@ -147,7 +177,7 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 		User: {
 			Settings: {}
 		}
-	}
+	};
 
 	function translateMenuRecursive(node) {
 		var translation = node.Current && node.Current.Name && Translate(node.Current.Name);
@@ -161,24 +191,18 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 		}
 	}
 
-	$scope.extendSelection = function (settings) {
-		
-	};
-
 	$scope.watchChanges = function(watchExpression, listener, objectEquality) {
 		var firstTime = true;
-		$scope.$watch(watchExpression, function () {
+		$scope.$watch(watchExpression, function() {
 			if (firstTime)
 				firstTime = false;
 			else
-				listener.apply($scope, arguments)
+				listener.apply($scope, arguments);
 		}, objectEquality);
-	}
+	};
 
-	Context.full({
-		view: viewMatch && viewMatch[1],
-		selected: selectedMatch && selectedMatch[1]
-	}, function (i) {
+	var query = $location.search();
+	Context.full(query, function (i) {
 		$scope.Context.Partials.Management = "App/Partials/Management.html";
 		Content.paths = i.Interface.Paths;
 		translateMenuRecursive(i.Interface.MainMenu);
@@ -187,43 +211,73 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 		angular.extend($scope.Context, i.Interface);
 		angular.extend($scope.Context, i.Context);
 
-		if (organizeMatch && organizeMatch[1] == "Organize")
+		if (query.mode == "Organize")
 			$scope.Context.Paths.PreviewUrl = $scope.appendQuery($scope.Context.Paths.PreviewUrl, "edit", "drag");
 
 		$scope.watchChanges("Context.User", function (user) {
 			Eventually(function () {
-				Profile.save({}, user, function(data){
+				if (user.$saved){
+					delete user.$saved;
+					return;
+				}
+
+				Profile.save({}, user, function (data) {
 				});
-			}, 20000);
+
+			}, 10000);
 		}, true);
+		$scope.saveUserSettings = function () {
+			$scope.Context.User.$saved = true;
+			Profile.save({}, $scope.Context.User, function (data) {
+			});
+		}
 	});
 
-	$scope.refreshContext = function (node, versionIndex, keepFlags, callback) {
-	    Context.get(Content.applySelection({ view: $scope.Context.User.Settings.ViewPreference, versionIndex: versionIndex }, node.Current), function (ctx) {
-	        //console.log("select -> contextchanged", node, versionIndex, ctx);
-	        if (keepFlags)
-	            angular.extend($scope.Context, ctx, { Flags: $scope.Context.Flags });
-	        else
-	            angular.extend($scope.Context, ctx);
-	        callback && callback(ctx);
-	        $scope.$emit("contextchanged", $scope.Context);
-	    });
+	$scope.refreshContext = function(node, versionIndex, keepFlags, callback) {
+		Context.get(Content.applySelection({ view: $scope.Context.User.Settings.ViewPreference, n2versionIndex: versionIndex }, node.Current), function(ctx) {
+			//console.log("select -> contextchanged", node, versionIndex, ctx);
+			if (keepFlags)
+				angular.extend($scope.Context, ctx, { Flags: $scope.Context.Flags });
+			else
+				angular.extend($scope.Context, ctx);
+			callback && callback(ctx);
+			$scope.$emit("contextchanged", $scope.Context);
+		});
+	};
+
+	$scope.expandTo = function (nodeOrPath, select) {
+	    var path = typeof nodeOrPath == "string" ? nodeOrPath : nodeOrPath && nodeOrPath.Current && nodeOrPath.Current.Path;
+		if (!path)
+			return;
+		var branch = findBranch($scope.Context.Content, path);
+		for (var i in branch) {
+			if (i == 0)
+				$scope.Context.SelectedNode = branch[0];
+			else
+				branch[i].Expanded = true;
+		}
+	}
+
+	$scope.reloadTree = function (selectedPath) {
+		Content.branch(Content.applySelection({}, selectedPath), function (data) {
+			$scope.Context.Content = data.Branch;
+			$scope.select(selectedPath);
+		});
 	}
 
 	$scope.select = function (nodeOrPath, versionIndex, keepFlags, forceContextRefresh, preventReload, disregardNodeUrl) {
-		if (typeof nodeOrPath == "string") {
+	    if (typeof nodeOrPath == "string") {
 			var path = nodeOrPath;
 			var node = findNodeRecursive($scope.Context.Content, path);
 			if (!node) {
 				var parentNode = findNodeRecursive($scope.Context.Content, getParentPath(path));
 				if (!preventReload && parentNode) {
-					$scope.reloadChildren(parentNode, function () {
+					$scope.reloadChildren(parentNode, function() {
 						// this is meant to refresh an item with changed path
 						$scope.select(path, versionIndex, keepFlags, forceContextRefresh, /*preventReload*/true, /*disregardNodeUrl*/true);
 					});
 				}
-			}
-			else
+			} else
 				return $scope.select(node, versionIndex, keepFlags, forceContextRefresh, preventReload, disregardNodeUrl);
 		} else if (typeof nodeOrPath == "object") {
 			var node = nodeOrPath;
@@ -231,7 +285,7 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 			if (!node)
 				return false;
 
-			if (!forceContextRefresh){
+			if (!forceContextRefresh) {
 				if ($scope.Context.AppliesTo == node.Current.PreviewUrl) {
 					//console.log("exiting due to same", node.Current.PreviewUrl);
 					return true;
@@ -242,30 +296,33 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 				$scope.Context.AppliesTo = node.Current.PreviewUrl;
 			}
 
-			$timeout(function () {
-			    $scope.refreshContext(node, versionIndex, keepFlags)
+			$timeout(function() {
+				$scope.refreshContext(node, versionIndex, keepFlags)
 			}, 200);
 			return true;
 		}
-	}
+	};
 
-	$scope.reloadChildren = function (parentPathOrNode, callback) {
+	$scope.reloadChildren = function(parentPathOrNode, callback, pathNotFound) {
 		var node = typeof parentPathOrNode == "string"
 			? findNodeRecursive($scope.Context.Content, parentPathOrNode)
 			: parentPathOrNode;
 
-		Content.loadChildren(node, callback);
-	}
+		if (node)
+		    Content.loadChildren(node, callback);
+		else if (pathNotFound)
+		    pathNotFound(parentPathOrNode);
+	};
 
 	$scope.reloadNode = function (pathOrNode, callback) {
-	    var node = typeof pathOrNode == "string"
+		var node = typeof pathOrNode == "string"
 			? findNodeRecursive($scope.Context.Content, pathOrNode)
 			: pathOrNode;
 
-	    Content.reload(node, function (node) {
-	        callback && callback(node);
-	    });
-	}
+		Content.reload(node, function(node) {
+			callback && callback(node);
+		});
+	};
 
 	$scope.isFlagged = function (flag) {
 		return jQuery.inArray(flag, $scope.Context.Flags) >= 0;
@@ -314,37 +371,25 @@ function ManagementCtrl($scope, $window, $timeout, $interpolate, Context, Conten
 	};
 }
 
-function NavigationCtrl($rootScope, $scope, Content, ContextMenuFactory, Eventually) {
-	$scope.search = {
-		execute: function (searchQuery) {
-			if (!searchQuery)
-				return $scope.search.clear();
-			else if (searchQuery == $scope.search.searching)
-				return;
+function ManagementConfirmCtrl($rootScope, $scope) {
+    $scope.confirm = function () {
+        $scope.settings.confirmed && $scope.settings.confirmed();
+        delete $scope.settings;
+    }
+    $scope.close = function () {
+        $scope.settings.cancelled && $scope.settings.cancelled();
+        delete $scope.settings;
+    }
+    $rootScope.$on("confirm", function (e, settings) {
+        $scope.settings = settings;
+        if (!$scope.$$phase) {
+            // specific sceanrio: move
+            $scope.$digest();
+        }
+    });
+}
 
-			$scope.search.searching = searchQuery;
-			Content.search(Content.applySelection({ q: searchQuery, take: 20, pages: true }, $scope.Context.CurrentItem), function (data) {
-				$scope.search.hits = data.Hits;
-				$scope.search.searching = "";
-			});
-		},
-		clear: function () {
-			$scope.search.query = "";
-			$scope.search.searching = "";
-			$scope.search.hits = null;
-			$scope.search.focused = -1;
-		},
-		hits: null,
-		query: "",
-		searching: false,
-		focused: undefined,
-	};
-	$scope.$watch("search.query", function (searchQuery) {
-		Eventually(function () {
-			$scope.search.execute(searchQuery);
-			$scope.$digest();
-		}, 400);
-	});
+function NavigationCtrl($scope, ContextMenuFactory) {
 	$scope.ContextMenu = new ContextMenuFactory($scope);
 }
 
@@ -354,10 +399,12 @@ function ScopeHandler($scope, Content) {
 		this.from = true;
 		$scope.node = node;
 		$scope.Context.User.Settings.Scope = node.Current.Path;
+		$scope.saveUserSettings();
 	};
 	this.clear = function () {
 		$scope.node = $scope.Context.Content;
 		delete $scope.Context.User.Settings.Scope;
+		$scope.saveUserSettings();
 		this.from = false;
 	};
 	if ($scope.Context.User.Settings.Scope) {
@@ -406,13 +453,11 @@ function TrunkCtrl($scope, $rootScope, Content, SortHelperFactory) {
 			node.IsPaged = false;
 		});
 	}
-	$scope.$on("moved", function (e, content) {
-	});
 	$scope.sort = new SortHelperFactory($scope, Content);
 	$scope.parts = {
-		show: function (node) {
+		show: function(node) {
 			node.Loading = true;
-			Content.children(Content.applySelection({ pages: false }, node.Current), function (data) {
+			Content.children(Content.applySelection({ pages: false }, node.Current), function(data) {
 				var zones = {};
 				for (var i in data.Children) {
 					var part = data.Children[i];
@@ -431,17 +476,19 @@ function TrunkCtrl($scope, $rootScope, Content, SortHelperFactory) {
 						Current: { Title: zone, IconClass: "n2-icon-columns silver", MetaInformation: [] },
 						HasChildren: true,
 						Children: zones[zone]
-					}
+					};
 					node.Parts.push(child);
 				}
-
+				node.Expanded = true;
 				delete node.Loading;
 			});
 		},
-		hide: function (node) {
+		hide: function(node) {
 			delete node.Parts;
+			if (!node.HasChildren)
+				node.Expanded = false;
 		}
-	}
+	};
 	$scope.scope = new ScopeHandler($scope, Content);
 }
 
@@ -480,6 +527,7 @@ function MenuCtrl($rootScope, $scope, Security) {
 
 	$scope.setViewPreference = function (viewPreference) {
 		$scope.Context.User.Settings.ViewPreference = viewPreference;
+		$scope.saveUserSettings();
 	};
 	$scope.$watch("Context.User.Settings.ViewPreference", function (viewPreference, previousPreference) {
 		$scope.setPreviewQuery("view", viewPreference);
@@ -489,7 +537,7 @@ function MenuCtrl($rootScope, $scope, Security) {
 		$scope.Context.Flags.push("View" + viewPreference);
 	});
 	$rootScope.$on("contextchanged", function (scope, ctx) {
-		ctx.Flags.push("View" + ctx.User.Settings.ViewPreference)
+		ctx.Flags.push("View" + ctx.User.Settings.ViewPreference);
 	});
 }
 
@@ -519,15 +567,16 @@ function MenuNodeLastChildCtrl($scope, $timeout) {
     $scope.$on("nodeclicked", function (scope, node) {
     	replace($scope.item, node);
     	$scope.Context.User.Settings.PreferredEditAction = node.Current.Name;
+    	$scope.saveUserSettings();
     });
 }
 
 function PageActionCtrl($scope, Content) {
-	$scope.dispose = function () {
-		Content.remove(Content.applySelection({}, node.Current), function () {
+	$scope.dispose = function() {
+		Content.remove(Content.applySelection({}, node.Current), function() {
 			$scope.reloadChildren(getParentPath($scope.Context.CurrentItem.Path));
 		});
-	}
+	};
 }
 
 function PreviewCtrl($scope, $rootScope) {
@@ -542,45 +591,89 @@ function PreviewCtrl($scope, $rootScope) {
 }
 
 function AddCtrl($scope, Content) {
-	$scope.loadDefinitions = function (node) {
+	$scope.loadDefinitions = function(node) {
 		node.Selected = node.Current.Path;
 		node.Loading = true;
-		Content.definitions(Content.applySelection({}, $scope.Context.CurrentItem), function (data) {
+		Content.definitions(Content.applySelection({}, $scope.Context.CurrentItem), function(data) {
 			node.Loading = false;
 			node.Children = data.Definitions;
 		});
-	}
+	};
 }
 
 function LanguageCtrl($scope, Content) {
-	$scope.loadLanguages = function (node) {
+	$scope.loadLanguages = function(node) {
 		node.Selected = node.Current.Path;
 		node.Loading = true;
-		Content.translations(Content.applySelection({}, $scope.Context.CurrentItem), function (data) {
+		Content.translations(Content.applySelection({}, $scope.Context.CurrentItem), function(data) {
 			node.Loading = false;
 			node.Children = data.Translations;
 		});
-	}
+	};
 }
 
 function VersionsCtrl($scope, Content) {
-	$scope.loadVersions = function (node) {
+	$scope.loadVersions = function(node) {
 		$scope.Selected = node.Current.Path;
 		node.Loading = true;
-		Content.versions(Content.applySelection({}, $scope.Context.CurrentItem), function (data) {
+		Content.versions(Content.applySelection({}, $scope.Context.CurrentItem), function(data) {
 			node.Loading = false;
 			node.Children = data.Versions;
 		});
-	}
+	};
+}
+
+function SearchCtrl($scope, $rootScope, Content, Eventually) {
+    $scope.item.Children = [{}];
+
+    $scope.$parent.toggleSearch = function () {
+        $scope.$parent.search.show = !$scope.$parent.search.show;
+        $scope.$parent.search.query = null;
+    }
+
+    $scope.$parent.search = {
+        execute: function (searchQuery) {
+            if (!searchQuery)
+                return $scope.search.clear();
+            else if (searchQuery == $scope.search.searching)
+                return;
+
+            $scope.search.searching = searchQuery;
+            Content.search(Content.applySelection({ q: searchQuery, take: 20, pages: true }, $scope.Context.CurrentItem), function (data) {
+                $scope.search.hits = data.Hits;
+                $scope.item.Expanded = true;
+                $scope.search.searching = "";
+            });
+        },
+        clear: function () {
+            $scope.search.query = "";
+            $scope.search.searching = "";
+            $scope.search.hits = null;
+            delete $scope.item.Expanded;
+            $scope.search.focused = -1;
+        },
+        hits: null,
+        query: "",
+        searching: false,
+        focused: undefined,
+    };
+    $scope.$watch("search.query", function (searchQuery) {
+        Eventually(function () {
+            $scope.search.execute(searchQuery);
+            $scope.$digest();
+        }, 400);
+    });
 }
 
 function PageInfoCtrl($scope, Content) {
-	$scope.exctractLanguage = function (language) {
+	$scope.exctractLanguage = function(language) {
 		return language && language.replace(/[(].*?[)]/, "");
-	}
-	$scope.toggleInfo = function () {
+	};
+	$scope.$parent.showInfo = $scope.Context.User.Settings.ShowInfo;
+	$scope.toggleInfo = function() {
 		$scope.$parent.showInfo = !$scope.$parent.showInfo;
-	}
+		$scope.Context.User.Settings.ShowInfo = $scope.$parent.showInfo;
+	};
 	$scope.definitions = {};
 	Content.definitions({}, function (data) {
 		for (var i in data.Definitions) {
@@ -589,20 +682,32 @@ function PageInfoCtrl($scope, Content) {
 	});
 }
 
-function PagePublishCtrl($scope, $rootScope, $modal, Content) {
+function PagePublishCtrl($scope, $rootScope, $modal, Content, Confirm, Translate) {
 	$scope.publish = function () {
-		Content.publish({ selected: $scope.Context.CurrentItem.Path, versionIndex: $scope.Context.CurrentItem.VersionIndex }, function (result) {
+		Content.publish({ selected: $scope.Context.CurrentItem.Path, n2versionIndex: $scope.Context.CurrentItem.VersionIndex }, function (result) {
 			$scope.previewUrl(result.Current.PreviewUrl);
 
 			$scope.reloadNode(result.Current.Path, $scope.refreshContext);
 		});
 	};
 	$scope.unpublish = function () {
-		Content.unpublish(Content.applySelection({}, $scope.Context.CurrentItem), function (result) {
-			$scope.previewUrl(result.Current.PreviewUrl);
-			
-			$scope.reloadNode(result.Current.Path, $scope.refreshContext);
-		});
+	    var settings = {
+	        title: Translate("confirm.unpublish.title"),
+	        item: $scope.Context.CurrentItem,
+	        template: "<b class='ico' ng-show='settings.item.IconClass || settings.item.IconUrl' ng-class='settings.item.IconClass' x-background-image='settings.item.IconUrl'></b> {{settings.item.Title}}",
+	        confirmed: function () {
+	            Content.unpublish(Content.applySelection({}, $scope.Context.CurrentItem), function (result) {
+	                $scope.previewUrl(result.Current.PreviewUrl);
+
+	                $scope.reloadNode(result.Current.Path, $scope.refreshContext);
+	            })
+	        }
+	    };
+	    if ($scope.Context.CurrentItem.MetaInformation.authority) {
+	        settings.template = "<div class='alert alert-warnig'>{{settings.warning}}</div>" + settings.template;
+	        settings.warning = Translate("confirm.unpublish.startpagewarning");
+	    }
+	    Confirm(settings);
 	};
 }
 
@@ -621,12 +726,15 @@ function PageScheduleCtrl($scope, Content) {
 			var date = $scope.schedule.date;
 			date.setHours(hour, min);
 
-			Content.schedule(Content.applySelection({ versionIndex: $scope.Context.CurrentItem.VersionIndex, publishDate: date }, $scope.Context.CurrentItem));
+			Content.schedule(Content.applySelection({ n2versionIndex: $scope.Context.CurrentItem.VersionIndex, publishDate: date }, $scope.Context.CurrentItem));
 		}
 	};
 }
 
 function FrameActionCtrl($scope, $rootScope, $timeout, FrameManipulator) {
+	$scope.execute = function (action) {
+		//FrameManipulator.click(action.Current.Selector);
+	}
 	$scope.$parent.manipulator = FrameManipulator;
 	$rootScope.$on("contextchanged", function (scope, e) {
 		$scope.$parent.action = null;

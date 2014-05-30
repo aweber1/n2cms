@@ -127,6 +127,7 @@ namespace N2.Management.Api
 
         public string Tree { get; set; }
 
+        [Obsolete("Implemented through menu")]
         public string Search { get; set; }
 
         public string Footer { get; set; }
@@ -215,7 +216,6 @@ namespace N2.Management.Api
                 Main = "App/Partials/Main.html",
                 Tree = "App/Partials/ContentTree.html",
                 Preview = "App/Partials/ContentPreview.html",
-                Search = "App/Partials/ContentSearch.html",
                 Footer = "App/Partials/Footer.html",
                 ContextMenu = "App/Partials/ContentContextMenu.html"
             };
@@ -227,6 +227,7 @@ namespace N2.Management.Api
             {
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "add", Title = "Add", IconClass = "n2-icon-plus-sign", Target = Targets.Preview, Description = "Adds a new child items", Url = "{{appendSelection('{ManagementUrl}/Content/New.aspx')}}".ResolveUrlTokens(), RequiredPermission = Permission.Write }),
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "edit", Title = "Edit", IconClass = "n2-icon-edit-sign", Target = Targets.Preview, Description = "Edit details", Url = "{{appendSelection('{ManagementUrl}/Content/Edit.aspx', true)}}".ResolveUrlTokens(), RequiredPermission = Permission.Write }),
+				new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "organize", Title = "Organize parts", IconClass = "n2-icon-th-large", Target = Targets.Preview, Description = "Drag and drop edit mode", Url = "{{appendQuery(Context.CurrentItem.PreviewUrl, 'edit=drag')}}", RequiredPermission = Permission.Write }),
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "delete", Title = "Delete", IconClass = "n2-icon-trash", Url = "{{appendSelection('{ManagementUrl}/Content/Delete.aspx')}}".ResolveUrlTokens(), ToolTip = "Move selected item to trash", RequiredPermission = Permission.Publish, HiddenBy = "Deleted" }),
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "security", Title = "Manage security", IconClass = "n2-icon-lock", Target = Targets.Preview, Url = "{{appendSelection('{ManagementUrl}/Content/Security/Default.aspx')}}".ResolveUrlTokens(), RequiredPermission = Permission.Administer }),
             };
@@ -359,6 +360,7 @@ namespace N2.Management.Api
                 },
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "frameaction", TemplateUrl = "App/Partials/FrameAction.html", RequiredPermission = Permission.Write }),
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "close", Title = "Close", Url = "{{Context.ReturnUrl || Context.CurrentItem.PreviewUrl || Context.Paths.PreviewUrl}}", Target = Targets.Preview, DisplayedBy = "Management", HiddenBy = "Unclosable" }),
+                new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "search", Alignment = "Right", TemplateUrl = "App/Partials/ContentSearch.html" }),
                 new Node<InterfaceMenuItem>(new InterfaceMenuItem { Name = "me", Url = engine.Content.Traverse.RootPage.Url, ToolTip = context.User.Identity.Name, Alignment = "Right", IconClass = "n2-icon-user" })
                 {
                     Children = new Node<InterfaceMenuItem>[]
@@ -391,7 +393,7 @@ namespace N2.Management.Api
 
         protected virtual Node<TreeNode> GetContent(HttpContextBase context, SelectionUtility selection, ContentItem selectedItem)
         {
-            var filter = engine.EditManager.GetEditorFilter(context.User);
+            var filter = engine.EditManager.GetEditorFilter(context.User) & Content.Is.Page();
 
             var root = selection.Traverse.RootPage;
             var structure = ApiExtensions.BuildBranchStructure(filter, engine.Resolve<IContentAdapterProvider>(), selectedItem, root);

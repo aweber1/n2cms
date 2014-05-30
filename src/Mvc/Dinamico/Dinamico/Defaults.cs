@@ -8,14 +8,25 @@ using N2.Definitions;
 
 namespace Dinamico
 {
-	public static class Defaults
-	{
-		public static class Containers
+    public static class Defaults
+    {
+        public static class Containers
+        {
+            public const string Metadata = "Metadata";
+            public const string Content = "Content";
+            public const string Site = "Site";
+            public const string Advanced = "Advanced";
+        }
+
+		public static string ContentClass(string zoneName)
 		{
-			public const string Metadata = "Metadata";
-			public const string Content = "Content";
-			public const string Site = "Site";
-			public const string Advanced = "Advanced";
+			switch (zoneName)
+			{
+				case "SliderArea":
+					return "carousel-caption";
+				default:
+					return "content";
+			}
 		}
 
 		public static string ImageSize(string preferredSize, string fallbackToZoneNamed)
@@ -70,5 +81,5 @@ namespace Dinamico
 		{
 			return currentPage.GetChildren().OfType<StartPage>();
 		}
-	}
+    }
 }

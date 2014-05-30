@@ -15,7 +15,7 @@ namespace N2.Tests.Web.Items
         [Obsolete]
         public override string RewrittenUrl
         {
-            get { return TemplateUrl.TrimStart('~') + "?page=" + ID; }
+            get { return TemplateUrl.TrimStart('~') + "?n2page=" + ID; }
         }
 
         public override ItemList GetChildren()
@@ -23,7 +23,8 @@ namespace N2.Tests.Web.Items
             return GetChildren(new ItemFilter[0]);
         }
 
-        public override ItemList GetChildren(string childZoneName)
+        [Obsolete]
+		public override ItemList GetChildren(string childZoneName)
         {
             return GetChildren(new ZoneFilter(childZoneName));
         }

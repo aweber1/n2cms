@@ -32,7 +32,7 @@ namespace N2.Details
     /// </summary>
     /// <remarks>Usually content details are created below the hood when working with primitive .NET types against a contnet item.</remarks>
     [Serializable]
-    [DebuggerDisplay("ContentDetail, {Name}: {Value}")]
+    [DebuggerDisplay("ContentDetail, {name} #{id}: {Value}")]
     public class ContentDetail: ICloneable, INameable, IMultipleValue
     {
         #region TypeKeys
@@ -369,14 +369,16 @@ namespace N2.Details
 
         /// <summary>Gets or sets the content item that this detail belong to.</summary>
         /// <remarks>Usually this is assigned by a content item which encapsulates the usage of details</remarks>
-        public virtual N2.ContentItem EnclosingItem
+        [System.Xml.Serialization.XmlIgnore]
+		public virtual N2.ContentItem EnclosingItem
         {
             get { return enclosingItem; }
             set { enclosingItem = value; }
         }
 
         /// <summary>Gets or sets the <see cref="N2.Details.DetailCollection"/> associated with this detail. This value can be null which means it's a named detail directly on the item.</summary>
-        public virtual DetailCollection EnclosingCollection
+		[System.Xml.Serialization.XmlIgnore]
+		public virtual DetailCollection EnclosingCollection
         {
             get { return collection; }
             set { collection = value; }

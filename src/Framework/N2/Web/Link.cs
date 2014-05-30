@@ -5,6 +5,7 @@ using System.Web.UI;
 using N2.Web.UI.WebControls;
 using System;
 using System.Web.Mvc;
+using N2.Definitions;
 
 namespace N2.Web
 {
@@ -128,8 +129,23 @@ namespace N2.Web
 
             Url = link.Url;
             Target = link.Target;
-            Contents = link.Contents;
+            Contents = HtmlSanitizer.Current.Encode(link.Contents);
             ToolTip = link.ToolTip;
+
+			var styleable = link as IStyleable;
+			if (styleable != null)
+			{
+				var style = styleable.Style;
+				if (style.Attributes != null)
+					foreach (var attribute in styleable.Style.Attributes)
+						Attributes[attribute.Key] = attribute.Value;
+				if (!string.IsNullOrEmpty(style.ContentPrefix))
+					Contents = style.ContentPrefix + Contents;
+				if (!string.IsNullOrEmpty(style.ContentSuffix))
+					Contents = Contents + style.ContentSuffix;
+				if (!string.IsNullOrEmpty(style.Contents))
+					Contents = style.Contents;
+			}
         }
 
         public Control ToControl()

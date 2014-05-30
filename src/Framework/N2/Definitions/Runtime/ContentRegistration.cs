@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using N2.Details;
 using N2.Collections;
 using System.Linq.Expressions;
+using N2.Engine;
 
 namespace N2.Definitions.Runtime
 {
@@ -42,6 +43,8 @@ namespace N2.Definitions.Runtime
     /// </summary>
     public class ContentRegistration : IContentRegistration, IRegistration
     {
+		Logger<ContentRegistration> logger;
+
         public class ContentRegistrationContext
         {
             public ContentRegistrationContext()
@@ -111,6 +114,13 @@ namespace N2.Definitions.Runtime
             get { return Definition.IconUrl; }
             set { Definition.IconUrl = value; }
         }
+
+	    /// <summary>Immediately maps to the definition icon class.</summary>
+	    public string IconClass
+	    {
+			get { return Definition.IconClass; }
+			set { Definition.IconClass = value; }
+	    }
         
         /// <summary>This property is set to true when the view start registering.</summary>
         public bool IsDefined { get; set; }
@@ -132,6 +142,8 @@ namespace N2.Definitions.Runtime
 
         public ContentRegistration Add(IContainable containable)
         {
+			logger.DebugFormat("Adding {0} with name {1}", containable, containable.Name);
+
             Definition.Add(containable);
             containable.ContainerName = Context.ContainerName;
 
@@ -157,9 +169,10 @@ namespace N2.Definitions.Runtime
 
         public ItemDefinition Finalize()
         {
-            if (IsDefined)
+			if (IsDefined)
             {
-                Definition.IsDefined = true;
+				logger.InfoFormat("Finalizing {0} with {1} editables", Definition.ItemType, Definition.Editables.Count);
+				Definition.IsDefined = true;
 
                 foreach (var refiner in Refiners.OrderBy(r => r.RefinementOrder))
                     refiner.Refine(Definition, new[] { Definition });
